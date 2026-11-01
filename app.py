@@ -1,7 +1,7 @@
 import streamlit as st
 from transformers import pipeline
 
-st.set_page_config(page_title="Movie Review Sentiment Analyzer", page_icon="🎬")
+st.set_page_config(page_title="Movie Sentiment Analyzer", page_icon="🎬")
 
 st.title("🎬 Movie Review Sentiment Analyzer")
 st.write("Click a sample review or enter your own text to test the model.")
@@ -23,24 +23,29 @@ samples = {
     "Negative Sample 2": "Awful storyline, poor pacing, and completely uninteresting characters."
 }
 
-# Dropdown for selecting pre-made reviews
+# Select sample review
 selected_sample = st.selectbox("Choose a sample review:", list(samples.keys()))
-
-# Set initial text based on selection
 default_text = samples[selected_sample] if selected_sample != "Select a sample..." else ""
 
-# Input area
-user_input = st.text_area("Review Text:", value=default_text, height=120)
+# Input text box
+user_input = st.text_area("Review Text:", value=default_text, height=130)
 
-if st.button("Analyze Sentiment") or (selected_sample != "Select a sample..."):
+# Single Analyze button that triggers evaluation
+if st.button("Analyze Sentiment"):
     if user_input.strip():
-        result = classifier(user_input)[0]
-        label = result['label']
-        score = result['score']
+        # Get prediction from Hugging Face model
+        prediction = classifier(user_input)[0]
+        raw_label = prediction['label']
+        score = prediction['score']
         
-        sentiment = "Positive 😃" if label in ["LABEL_1", "POSITIVE"] else "Negative 😞"
-        
-        st.subheader(f"Result: {sentiment}")
-        st.write(f"**Confidence Score:** {score:.2%}")
+        # Map raw Hugging Face labels (LABEL_1/LABEL_0) to clear human readable output
+        if raw_label in ["LABEL_1", "POSITIVE"]:
+            sentiment = "Positive 😃"
+            st.success(f"**Result:** {sentiment}")
+        else:
+            sentiment = "Negative 😞"
+            st.error(f"**Result:** {sentiment}")
+            
+        st.metric(label="Confidence Score", value=f"{score:.2%}")
     else:
-        st.info("Please select a sample or enter text to analyze.")
+        st.warning("Please enter or select a movie review before clicking analyze.")
