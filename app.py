@@ -4,7 +4,7 @@ from transformers import pipeline
 st.set_page_config(page_title="Movie Sentiment Analyzer", page_icon="🎬")
 
 st.title("🎬 Movie Review Sentiment Analyzer")
-st.write("Click a sample review or enter your own text to test the model.")
+st.write("Enter a movie review below to test the sentiment model.")
 
 MODEL_REPO = "Zubair-Dashti/distilbert-imdb-sentiment"
 
@@ -14,7 +14,7 @@ def load_pipeline():
 
 classifier = load_pipeline()
 
-# Sample reviews selection outside the form
+# Sample reviews selection
 samples = {
     "Select a sample...": "",
     "Positive Sample 1": "This movie was absolutely amazing! Excellent performance and great story.",
@@ -23,31 +23,29 @@ samples = {
     "Negative Sample 2": "Awful storyline, poor pacing, and completely uninteresting characters."
 }
 
-selected_sample = st.selectbox("Choose a sample review:", list(samples.keys()))
+selected_sample = st.selectbox("Choose a sample review (optional):", list(samples.keys()))
 default_text = samples[selected_sample] if selected_sample != "Select a sample..." else ""
 
-# Form container isolates the user input and submission
-with st.form(key="sentiment_form"):
-    user_input = st.text_area("Review Text:", value=default_text, height=130)
-    submit_button = st.form_submit_button(label="Analyze Sentiment")
+# Input text box
+user_input = st.text_area("Review Text:", value=default_text, height=140, placeholder="Type or paste your movie review here...")
 
-# Model execution takes place ONLY when submit_button is True AND user_input is not empty
-if submit_button:
+# Execution block: ONLY runs when button is pressed AND text exists
+if st.button("Analyze Sentiment"):
     clean_text = user_input.strip()
     if clean_text:
-        with st.spinner("Analyzing review..."):
+        with st.spinner("Classifying sentiment..."):
             prediction = classifier(clean_text)[0]
             raw_label = prediction['label']
             score = prediction['score']
             
-            # Label mapping
+            # Map DistilBERT output labels
             if raw_label in ["LABEL_1", "POSITIVE"]:
                 sentiment = "Positive 😃"
                 st.success(f"**Result:** {sentiment}")
             else:
                 sentiment = "Negative 😞"
                 st.error(f"**Result:** {sentiment}")
-                
+            
             st.metric(label="Confidence Score", value=f"{score:.2%}")
     else:
         st.warning("Please enter or select a movie review before clicking analyze.")
