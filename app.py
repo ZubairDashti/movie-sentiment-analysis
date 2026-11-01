@@ -14,38 +14,29 @@ def load_pipeline():
 
 classifier = load_pipeline()
 
-# Sample reviews selection
-samples = {
-    "Select a sample...": "",
-    "Positive Sample 1": "This movie was absolutely amazing! Excellent performance and great story.",
-    "Positive Sample 2": "A breathtaking masterpiece. Outstanding visual effects and direction.",
-    "Negative Sample 1": "Extremely boring film. Waste of time and money, terrible acting.",
-    "Negative Sample 2": "Awful storyline, poor pacing, and completely uninteresting characters."
-}
+# Single text input box — NO sample selector
+user_input = st.text_area(
+    "Review Text:", 
+    height=140, 
+    placeholder="Type or paste your movie review here..."
+)
 
-selected_sample = st.selectbox("Choose a sample review (optional):", list(samples.keys()))
-default_text = samples[selected_sample] if selected_sample != "Select a sample..." else ""
-
-# Input text box
-user_input = st.text_area("Review Text:", value=default_text, height=140, placeholder="Type or paste your movie review here...")
-
-# Execution block: ONLY runs when button is pressed AND text exists
+# Analyze button
 if st.button("Analyze Sentiment"):
     clean_text = user_input.strip()
+    
     if clean_text:
         with st.spinner("Classifying sentiment..."):
             prediction = classifier(clean_text)[0]
             raw_label = prediction['label']
             score = prediction['score']
             
-            # Map DistilBERT output labels
+            # Label mapping for DistilBERT
             if raw_label in ["LABEL_1", "POSITIVE"]:
-                sentiment = "Positive 😃"
-                st.success(f"**Result:** {sentiment}")
+                st.success("**Result:** Positive 😃")
             else:
-                sentiment = "Negative 😞"
-                st.error(f"**Result:** {sentiment}")
+                st.error("**Result:** Negative 😞")
             
             st.metric(label="Confidence Score", value=f"{score:.2%}")
     else:
-        st.warning("Please enter or select a movie review before clicking analyze.")
+        st.warning("Please enter a review before clicking analyze.")
