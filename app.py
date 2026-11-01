@@ -4,10 +4,9 @@ from transformers import pipeline
 st.set_page_config(page_title="Movie Review Sentiment Analyzer", page_icon="🎬")
 
 st.title("🎬 Movie Review Sentiment Analyzer")
-st.write("Enter a movie review below to classify whether the review is Positive or Negative.")
+st.write("Click a sample review or enter your own text to test the model.")
 
-# Replace with your uploaded Hugging Face repo path
-MODEL_REPO = "YOUR_USERNAME/distilbert-imdb-sentiment"
+MODEL_REPO = "Zubair-Dashti/distilbert-imdb-sentiment"
 
 @st.cache_resource
 def load_pipeline():
@@ -15,18 +14,33 @@ def load_pipeline():
 
 classifier = load_pipeline()
 
-user_input = st.text_area("Review Text:", "The cinematography was stunning and the acting was top-tier. Highly recommended!")
+# Sample reviews
+samples = {
+    "Select a sample...": "",
+    "Positive Sample 1": "This movie was absolutely amazing! Excellent performance and great story.",
+    "Positive Sample 2": "A breathtaking masterpiece. Outstanding visual effects and direction.",
+    "Negative Sample 1": "Extremely boring film. Waste of time and money, terrible acting.",
+    "Negative Sample 2": "Awful storyline, poor pacing, and completely uninteresting characters."
+}
 
-if st.button("Analyze Sentiment"):
+# Dropdown for selecting pre-made reviews
+selected_sample = st.selectbox("Choose a sample review:", list(samples.keys()))
+
+# Set initial text based on selection
+default_text = samples[selected_sample] if selected_sample != "Select a sample..." else ""
+
+# Input area
+user_input = st.text_area("Review Text:", value=default_text, height=120)
+
+if st.button("Analyze Sentiment") or (selected_sample != "Select a sample..."):
     if user_input.strip():
         result = classifier(user_input)[0]
         label = result['label']
         score = result['score']
-
-        # DistilBERT default outputs standard labels (e.g., LABEL_1=Positive, LABEL_0=Negative)
+        
         sentiment = "Positive 😃" if label in ["LABEL_1", "POSITIVE"] else "Negative 😞"
-
+        
         st.subheader(f"Result: {sentiment}")
         st.write(f"**Confidence Score:** {score:.2%}")
     else:
-        st.warning("Please enter text to analyze.")
+        st.info("Please select a sample or enter text to analyze.")
