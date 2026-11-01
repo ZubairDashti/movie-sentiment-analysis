@@ -30,7 +30,7 @@ default_text = samples[selected_sample] if selected_sample != "Select a sample..
 # Input text box
 user_input = st.text_area("Review Text:", value=default_text, height=130)
 
-# Single Analyze button that triggers evaluation
+# The model ONLY runs when the user clicks this button
 if st.button("Analyze Sentiment"):
     if user_input.strip():
         # Get prediction from Hugging Face model
@@ -38,7 +38,7 @@ if st.button("Analyze Sentiment"):
         raw_label = prediction['label']
         score = prediction['score']
         
-        # Map raw Hugging Face labels (LABEL_1/LABEL_0) to clear human readable output
+        # Map raw labels to Positive / Negative
         if raw_label in ["LABEL_1", "POSITIVE"]:
             sentiment = "Positive 😃"
             st.success(f"**Result:** {sentiment}")
