@@ -1,54 +1,35 @@
+%%writefile app.py
 import streamlit as st
 from transformers import pipeline
 
-st.set_page_config(page_title="Movie Sentiment Analyzer", page_icon="🎬")
+st.set_page_config(page_title="IMDb Sentiment Classifier", page_icon="🎬")
 
-st.title("🎬 Movie Review Sentiment Analyzer")
-st.write("Enter a movie review below to test the sentiment model.")
+st.title("🎬 IMDb Sentiment Analyzer")
+st.write("This application uses a fine-tuned, optimized DistilBERT model hosted on the Hugging Face Hub to classify movie reviews.")
 
-MODEL_REPO = "Zubair-Dashti/distilbert-imdb-sentiment"
-
+# Cache the pipeline resource so it doesn't reload on every button click
 @st.cache_resource
-def load_pipeline():
-    return pipeline("text-classification", model=MODEL_REPO)
+def load_classifier():
+    model_repo = "Zubair-Dashti/distilbert-imdb-sentiment-optimized"
+    return pipeline("text-classification", model=model_repo)
 
-# Initialize classifier
-classifier = load_pipeline()
-
-# Initialize session state variable to strictly control display
-if "has_analyzed" not in st.session_state:
-    st.session_state.has_analyzed = False
-
-# Form container ensures inputs do not trigger rerun logic prematurely
-with st.form(key="review_form"):
-    user_input = st.text_area(
-        "Review Text:", 
-        height=140, 
-        placeholder="Type or paste your movie review here..."
-    )
-    submit_button = st.form_submit_button(label="Analyze Sentiment")
-
-# Execution ONLY happens when form is submitted
-if submit_button:
-    clean_text = user_input.strip()
-    if clean_text:
-        st.session_state.has_analyzed = True
-        st.session_state.analyzed_text = clean_text
-    else:
-        st.session_state.has_analyzed = False
-        st.warning("Please enter a review before clicking analyze.")
-
-# Render output ONLY if a valid analysis took place
-if st.session_state.has_analyzed:
-    with st.spinner("Classifying sentiment..."):
-        prediction = classifier(st.session_state.analyzed_text)[0]
-        raw_label = prediction['label']
-        score = prediction['score']
-        
-        # Label mapping for DistilBERT
-        if raw_label in ["LABEL_1", "POSITIVE"]:
-            st.success("**Result:** Positive 😃")
+try:
+    with st.spinner("Loading optimized model from Hugging Face Hub..."):
+        classifier = load_classifier()
+    
+    user_input = st.text_area("Enter your movie review here:", "This movie was fantastic! The acting was supreme.")
+    
+    if st.button("Classify Sentiment"):
+        if user_input.strip() != "":
+            result = classifier(user_input)[0]
+            label = result['label']
+            score = result['score']
+            
+            if label == "POSITIVE":
+                st.success(f"✨ **Positive Sentiment** (Confidence: {score:.2%})")
+            else:
+                st.error(f"💔 **Negative Sentiment** (Confidence: {score:.2%})")
         else:
-            st.error("**Result:** Negative 😞")
-        
-        st.metric(label="Confidence Score", value=f"{score:.2%}")
+            st.warning("Please write some text before analyzing.")
+except Exception as e:
+    st.error(f"Error loading the model: {e}")
